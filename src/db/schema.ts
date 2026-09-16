@@ -14,19 +14,21 @@ const c = {
     return p.timestamp(config)
   },
 
-  idPrimaryKey: () => {
-    return p.bigint({ mode: 'string' }).primaryKey().generatedAlwaysAsIdentity()
+  uuidPrimaryKey: () => {
+    return p.uuid().defaultRandom().primaryKey()
   },
 
-  idForeignKey: (
-    fieldName?: string,
-    config: p.PgBigIntConfig<'string'> | undefined = { mode: 'string' }
-  ) => {
-    if (fieldName !== undefined) {
-      return p.bigint(fieldName, config)
-    }
-    return p.bigint(config)
+  uuidForeignKey: () => {
+    return p.uuid()
   },
+
+  // idPrimaryKey: () => {
+  //   return p.bigint({ mode: 'string' }).primaryKey().generatedAlwaysAsIdentity()
+  // },
+
+  // idForeignKey: () => {
+  //   return p.bigint({ mode: 'string' })
+  // },
 
   index: (tableName: string, ...columns: p.PgColumn[]) => {
     if (columns.length === 0) throw new Error('refIndex requires at least one column')
@@ -53,7 +55,7 @@ export const entryTypeEnum = p.pgEnum('entry_type', ['debit', 'credit'])
 
 export type Users = InferSelectModel<typeof users>
 export const users = p.snakeCase.table('users', {
-  id: c.idPrimaryKey(),
+  id: c.uuidPrimaryKey(),
   username: p.text().notNull().unique(),
   email: p.text().notNull().unique(),
   passwordHash: p.text().notNull(),
@@ -66,16 +68,16 @@ export const users = p.snakeCase.table('users', {
 const auditColumns = {
   createdAt: c.timestampz().defaultNow().notNull(),
   createdBy: c
-    .idForeignKey()
+    .uuidForeignKey()
     .references(() => users.id, { onDelete: 'restrict' })
     .notNull(),
   updatedAt: c.timestampz().defaultNow().notNull(),
   updatedBy: c
-    .idForeignKey()
+    .uuidForeignKey()
     .references(() => users.id, { onDelete: 'restrict' })
     .notNull(),
   deletedAt: c.timestampz().defaultNow(),
-  deletedBy: c.idForeignKey().references(() => users.id, { onDelete: 'restrict' }),
+  deletedBy: c.uuidForeignKey().references(() => users.id, { onDelete: 'restrict' }),
 }
 
 const auditIndexes = <
@@ -93,13 +95,35 @@ const auditIndexes = <
 
 // #endregion
 
+export type RefreshTokens = InferSelectModel<typeof refreshTokens>
+export const refreshTokens = p.snakeCase.table(
+  'refresh_tokens',
+  {
+    id: c.uuidPrimaryKey(),
+    userId: c
+      .uuidPrimaryKey()
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    refreshTokenHash: p.text().notNull().unique(),
+    expiresAt: c.timestampz('expires_at').notNull(),
+    usedAt: c.timestampz('used_at'),
+    revokedAt: c.timestampz('revoked_at'),
+    createdAt: c.timestampz('created_at').defaultNow().notNull(),
+  },
+  (t) => [c.index('refresh_tokens', t.userId)]
+)
+
+// #region Refresh Tokens Table
+
+// #endregion
+
 // #region Workspaces Table
 
 export type Workspaces = InferSelectModel<typeof workspaces>
 export const workspaces = p.snakeCase.table(
   'workspaces',
   {
-    id: c.idPrimaryKey(),
+    id: c.uuidPrimaryKey(),
     name: p.text().notNull(),
     description: p.text(),
     ...auditColumns,
@@ -107,7 +131,7 @@ export const workspaces = p.snakeCase.table(
   (t) => [...auditIndexes('workspaces', t)]
 )
 
-const workspaceRef = c.idForeignKey().references(() => workspaces.id, { onDelete: 'restrict' })
+const workspaceRef = c.uuidForeignKey().references(() => workspaces.id, { onDelete: 'restrict' })
 
 // #endregion
 
@@ -117,13 +141,13 @@ export type UserWorkspaces = InferSelectModel<typeof userWorkspaces>
 export const userWorkspaces = p.snakeCase.table(
   'user_workspaces',
   {
-    id: c.idPrimaryKey(),
+    id: c.uuidPrimaryKey(),
     userId: c
-      .idForeignKey()
+      .uuidForeignKey()
       .references(() => users.id, { onDelete: 'restrict' })
       .notNull(),
     workspaceId: c
-      .idForeignKey()
+      .uuidForeignKey()
       .references(() => workspaces.id, { onDelete: 'restrict' })
       .notNull(),
     permissions: p.jsonb().default({}).notNull(),
@@ -143,7 +167,7 @@ export const userWorkspaces = p.snakeCase.table(
 export const accounts = p.snakeCase.table(
   'accounts',
   {
-    id: c.idPrimaryKey(),
+    id: c.uuidPrimaryKey(),
     workspaceId: workspaceRef.notNull(),
     name: p.text().notNull(),
     numbering: p.integer(),
@@ -168,7 +192,7 @@ export const accounts = p.snakeCase.table(
 export const journalEntries = p.snakeCase.table(
   'journal_entries',
   {
-    id: c.idPrimaryKey(),
+    id: c.uuidPrimaryKey(),
     workspaceId: workspaceRef.notNull(),
     transactionDate: p.date().notNull(),
     baseCurrency: p.char({ length: 3 }).notNull(),
@@ -192,14 +216,14 @@ export const journalEntries = p.snakeCase.table(
 export const journalLines = p.snakeCase.table(
   'journal_lines',
   {
-    id: c.idPrimaryKey(),
+    id: c.uuidPrimaryKey(),
     workspaceId: workspaceRef.notNull(),
     journalEntryId: c
-      .idForeignKey()
+      .uuidForeignKey()
       .references(() => journalEntries.id, { onDelete: 'cascade' })
       .notNull(),
     accountId: c
-      .idForeignKey()
+      .uuidForeignKey()
       .references(() => accounts.id, { onDelete: 'cascade' })
       .notNull(),
     amount: p.numeric({ precision: 19, scale: 4 }).notNull(),
