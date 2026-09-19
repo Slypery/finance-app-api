@@ -1,4 +1,4 @@
-import { PORT } from '@/env.js'
+import { env } from '@/env.js'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { logger } from 'hono/logger'
@@ -6,6 +6,8 @@ import { appendFile, mkdir } from 'node:fs/promises'
 import { AppError } from './errors/app.error.js'
 import { db } from '@/db/index.js'
 import { users } from '@/db/schema.js'
+import { authRoute } from '@/routes/auth.route.js'
+import { userRoute } from '@/routes/user/user.routes.js'
 
 const app = new Hono()
 
@@ -28,14 +30,17 @@ app.onError((err, c) => {
 
 app.get('/', async (c) => {
   // return c.text('Hello Hono!')
-  await db.insert(users).values({username: 'admin', email: 'admin@mail.com', passwordHash: '', displayName: 'admin'})
+  // await db.insert(users).values({username: 'admin', email: 'admin@mail.com', passwordHash: '', displayName: 'admin'})
   return c.json(await db.select().from(users))
 })
+
+app.route('/api/auth', authRoute)
+app.route('/api/user', userRoute)
 
 serve(
   {
     fetch: app.fetch,
-    port: PORT,
+    port: env.PORT,
   },
   (info) => {
     console.log(`Server is running on http://localhost:${info.port}`)
