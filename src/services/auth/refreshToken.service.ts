@@ -13,7 +13,7 @@ export async function createRefreshToken(userId: Users['id'], tx?: Transaction):
   // create refresh token
   const refreshToken = randomBytes(64).toString('hex')
   const refreshTokenHash = createHash('sha256').update(refreshToken).digest('hex')
-  const expiresAt = new Date(Date.now() + env.REFRESH_TOKEN_TTL)
+  const expiresAt = new Date(Date.now() + env.REFRESH_TOKEN_TTL * 1000)
 
   // store refresh token hash in database
   await client.insert(refreshTokens).values({
