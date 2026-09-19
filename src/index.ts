@@ -2,40 +2,40 @@ import { env } from '@/env.js'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { logger } from 'hono/logger'
-import { appendFile, mkdir } from 'node:fs/promises'
 import { AppError } from './errors/app.error.js'
-import { db } from '@/db/index.js'
-import { users } from '@/db/schema.js'
-import { authRoute } from '@/routes/auth.route.js'
-import { userRoute } from '@/routes/user/user.routes.js'
+import { writeErrorLog } from '@/logger.js'
+import { requestId } from 'hono/request-id'
+import { routePath } from 'hono/route'
+import { appRoute } from '@/routes/routes.js'
 
-const app = new Hono()
+type AppEnv = {
+  Variables: {
+    userId?: string
+    workspace?: { id: string }
+  }
+}
+
+const app = new Hono<AppEnv>()
 
 app.use(logger())
-
-async function writeErrorLog(err: Error) {
-  const log = `[${new Date().toISOString()}] ${err.stack ?? err.message}\n`
-  await mkdir('logs', { recursive: true })
-  await appendFile('logs/error.log', log)
-}
+app.use(requestId())
 
 app.onError((err, c) => {
   if (err instanceof AppError) {
     return c.json({ success: false, code: err.code, error: err.message }, err.statusCode)
   }
 
-  writeErrorLog(err)
-  return c.json({ error: 'Internal Server Error' }, 500)
+  void writeErrorLog(err, {
+    requestId: c.get('requestId'),
+    method: c.req.method,
+    path: routePath(c),
+    userId: c.get('userId'),
+    workspaceId: c.get('workspace')?.id,
+  })
+  return c.json({ success: false, code: 'INTERNAL_ERROR', error: 'Internal Server Error' }, 500)
 })
 
-app.get('/', async (c) => {
-  // return c.text('Hello Hono!')
-  // await db.insert(users).values({username: 'admin', email: 'admin@mail.com', passwordHash: '', displayName: 'admin'})
-  return c.json(await db.select().from(users))
-})
-
-app.route('/api/auth', authRoute)
-app.route('/api/user', userRoute)
+app.route('/api', appRoute)
 
 serve(
   {

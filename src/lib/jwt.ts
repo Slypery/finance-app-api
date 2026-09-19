@@ -7,7 +7,7 @@ export async function signAccessToken(userId: string) {
   return new SignJWT({ userId })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime(new Date(Date.now() + env.ACCESS_TOKEN_TTL))
+    .setExpirationTime(`${env.ACCESS_TOKEN_TTL}s`)
     .sign(secret)
 }
 
