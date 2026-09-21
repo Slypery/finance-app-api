@@ -6,7 +6,7 @@ import { AppError } from './errors/app.error.js'
 import { writeErrorLog } from '@/logger.js'
 import { requestId } from 'hono/request-id'
 import { routePath } from 'hono/route'
-import { appRoute } from '@/routes/routes.js'
+import { appRoute } from '@/modules/routes.js'
 
 type AppEnv = {
   Variables: {

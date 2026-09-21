@@ -1,10 +1,10 @@
 import { Hono } from 'hono'
 import { sValidator } from '@hono/standard-validator'
-import { registerSchema, loginSchema } from '@/schema/auth.schema.js'
-import { registerNewUser } from '@/services/auth/register.service.js'
-import { loginUser } from '@/services/auth/login.service.js'
 import { getCookie } from 'hono/cookie'
-import { refreshAccessToken } from '@/services/auth/refreshToken.service.js'
+import { registerNewUser } from '@/modules/auth/register.service.js'
+import { loginUser } from '@/modules/auth/login.service.js'
+import { refreshAccessToken } from '@/modules/auth/refreshToken.service.js'
+import { loginSchema, registerSchema } from '@/modules/auth/auth.schema.js'
 
 export const authRoute = new Hono()
 

@@ -1,6 +1,6 @@
 import { AppError } from '@/errors/app.error.js'
 import type { AuthEnv } from '@/middleware/auth.middleware.js'
-import { requireMembership } from '@/services/workspace/membership.service.js'
+import { requireMembership } from '@/modules/membership/membership.service.js'
 import { createMiddleware } from 'hono/factory'
 import z from 'zod'
 
