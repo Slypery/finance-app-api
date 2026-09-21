@@ -3,18 +3,6 @@ import { users, type Users } from '@/db/schema.js'
 import { AppError } from '@/errors/app.error.js'
 import { argon2id } from 'hash-wasm'
 
-export class UsernameAlreadyExistsError extends AppError {
-  constructor(username: string) {
-    super(`User with the username: "${username}" already exists`, 409, 'USERNAME_ALREADY_TAKEN')
-  }
-}
-
-export class EmailAlreadyExistsError extends AppError {
-  constructor(email: string) {
-    super(`User with the email: "${email}" already exists`, 409, 'EMAIL_ALREADY_EXISTS')
-  }
-}
-
 type RegisterNewUserInput = {
   username: string
   email: string
@@ -31,8 +19,17 @@ export async function registerNewUser(input: RegisterNewUserInput): Promise<Regi
   })
 
   if (existing) {
-    if (existing.username === input.username) throw new UsernameAlreadyExistsError(input.username)
-    throw new EmailAlreadyExistsError(input.email)
+    if (existing.username === input.username)
+      throw new AppError(
+        `User with the username: "${input.username}" already exists`,
+        409,
+        'USERNAME_ALREADY_TAKEN'
+      )
+    throw new AppError(
+      `User with the email: "${input.email}" already exists`,
+      409,
+      'EMAIL_ALREADY_EXISTS'
+    )
   }
 
   // create password hash

@@ -5,23 +5,17 @@ import { signAccessToken } from '@/lib/jwt.js'
 import { createRefreshToken } from '@/modules/auth/refreshToken.service.js'
 import { argon2Verify } from 'hash-wasm'
 
-export class InvalidCredentialsError extends AppError {
-  constructor() {
-    super('Invalid credentials', 401, 'INVALID_CREDENTIALS')
-  }
-}
-
 export async function loginUser(identifier: Users['email'] | Users['username'], password: string) {
   // find user based on email or username
   const userData = await db.query.users.findFirst({
     where: { OR: [{ email: identifier }, { username: identifier }] },
   })
 
-  if (!userData) throw new InvalidCredentialsError()
+  if (!userData) throw new AppError('Invalid credentials', 401, 'INVALID_CREDENTIALS')
 
   // verify password
   const credentials_ok = await argon2Verify({ password: password, hash: userData.passwordHash })
-  if (!credentials_ok) throw new InvalidCredentialsError()
+  if (!credentials_ok) throw new AppError('Invalid credentials', 401, 'INVALID_CREDENTIALS')
 
   // create access token
   const accessToken = await signAccessToken(userData.id)

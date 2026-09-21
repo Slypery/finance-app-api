@@ -30,30 +30,6 @@ type RefreshAccessTokenResult = {
   accessToken: string
 }
 
-export class InvalidTokenError extends AppError {
-  constructor() {
-    super('Invalid Token', 401, 'INVALID_TOKEN')
-  }
-}
-
-export class TokenRevokedError extends AppError {
-  constructor() {
-    super('Token Revoked', 401, 'TOKEN_REVOKED')
-  }
-}
-
-export class TokenExpiredError extends AppError {
-  constructor() {
-    super('Token Expired', 401, 'TOKEN_EXPIRED')
-  }
-}
-
-export class TokenReuseDetectedError extends AppError {
-  constructor() {
-    super('Token Reuse Detected', 401, 'TOKEN_REUSE_DETECTED')
-  }
-}
-
 export async function refreshAccessToken(refreshToken: string): Promise<RefreshAccessTokenResult> {
   const refreshTokenHash = createHash('sha256').update(refreshToken).digest('hex')
 
@@ -62,9 +38,9 @@ export async function refreshAccessToken(refreshToken: string): Promise<RefreshA
     where: { refreshTokenHash },
   })
 
-  if (!storedToken) throw new InvalidTokenError() // if not found
+  if (!storedToken) throw new AppError('Invalid Token', 401, 'INVALID_TOKEN') // if not found
 
-  if (storedToken.revokedAt) throw new TokenRevokedError() // if revoked
+  if (storedToken.revokedAt) throw new AppError('Token Revoked', 401, 'TOKEN_REVOKED') // if revoked
 
   if (storedToken.expiresAt < new Date()) {
     await db
@@ -72,7 +48,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<RefreshA
       .set({ revokedAt: new Date() })
       .where(eq(refreshTokens.id, storedToken.id))
 
-    throw new TokenExpiredError() // if expired
+    throw new AppError('Token Expired', 401, 'TOKEN_EXPIRED') // if expired
   }
 
   // token already used
@@ -83,7 +59,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<RefreshA
       .set({ revokedAt: new Date() })
       .where(eq(refreshTokens.userId, storedToken.userId))
 
-    throw new TokenReuseDetectedError()
+    throw new AppError('Token Reuse Detected', 401, 'TOKEN_REUSE_DETECTED')
   }
 
   const newAccessToken = await signAccessToken(storedToken.userId)
