@@ -1,9 +1,12 @@
-import { authMiddleware } from '@/middleware/auth.middleware.js'
-import { workspaceMiddleware, type WorkspaceEnv } from '@/middleware/workspace.middleware.js'
+import { authMiddleware, type AuthEnv } from '@/middleware/auth.middleware.js'
+import { getUserWorkspaces } from '@/modules/workspace/workspace.service.js'
 import { Hono } from 'hono'
 
-export const workspaceRoute = new Hono<WorkspaceEnv>()
+export const workspaceRoute = new Hono<AuthEnv>()
 workspaceRoute.use(authMiddleware)
-workspaceRoute.use(workspaceMiddleware)
 
-workspaceRoute.get('/', async (c) => c.json({ test: 'test' }))
+workspaceRoute.get('/', async (c) => {
+  const result = await getUserWorkspaces(c.get('userId'))
+
+  return c.json({ success: true, data: result })
+})

@@ -1,5 +1,6 @@
+import { workspaceMiddleware, type WorkspaceEnv } from '@/middleware/workspace.middleware.js'
 import { Hono } from 'hono'
 
-export const accountRoutes = new Hono()
-
-accountRoutes.post('/', async (c) => c.json({}))
+export const accountRoute = new Hono<WorkspaceEnv>()
+accountRoute.use(workspaceMiddleware)
+accountRoute.post('/', async (c) => c.json({}))
