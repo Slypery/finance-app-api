@@ -76,7 +76,7 @@ const auditColumns = {
     .uuidForeignKey()
     .references(() => users.id, { onDelete: 'restrict' })
     .notNull(),
-  deletedAt: c.timestampz().defaultNow(),
+  deletedAt: c.timestampz(),
   deletedBy: c.uuidForeignKey().references(() => users.id, { onDelete: 'restrict' }),
 }
 
@@ -124,11 +124,19 @@ export const workspaces = p.snakeCase.table(
   'workspaces',
   {
     id: c.uuidPrimaryKey(),
-    name: p.text().notNull(),
+    name: p.text().notNull().unique(),
     description: p.text(),
+    ownerUserId: c
+      .uuidForeignKey()
+      .references(() => users.id, { onDelete: 'restrict' })
+      .notNull(),
     ...auditColumns,
   },
-  (t) => [...auditIndexes('workspaces', t)]
+  (t) => [
+    c.index('workspaces', t.ownerUserId),
+    c.uniqueIndex('workspaces', t.name, t.ownerUserId),
+    ...auditIndexes('workspaces', t),
+  ]
 )
 
 const workspaceRef = c.uuidForeignKey().references(() => workspaces.id, { onDelete: 'restrict' })

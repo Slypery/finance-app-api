@@ -7,6 +7,7 @@ import { writeErrorLog } from '@/logger.js'
 import { requestId } from 'hono/request-id'
 import { routePath } from 'hono/route'
 import { appRoute } from '@/modules/routes.js'
+import { HTTPException } from 'hono/http-exception'
 
 type AppEnv = {
   Variables: {
@@ -25,6 +26,10 @@ app.onError((err, c) => {
     return c.json({ success: false, code: err.code, error: err.message }, err.statusCode)
   }
 
+  if (err instanceof HTTPException) {
+    return c.json({ success: false, code: 'HTTP_ERROR', error: err.message }, err.status)
+  }
+
   void writeErrorLog(err, {
     requestId: c.get('requestId'),
     method: c.req.method,
@@ -32,6 +37,7 @@ app.onError((err, c) => {
     userId: c.get('userId'),
     workspaceId: c.get('workspace')?.id,
   })
+
   return c.json({ success: false, code: 'INTERNAL_ERROR', error: 'Internal Server Error' }, 500)
 })
 

@@ -6,7 +6,7 @@ import { Hono } from 'hono'
 export const meRoute = new Hono<AuthEnv>()
 meRoute.use(authMiddleware)
 
-meRoute.get('/profile', async (c) => {
+meRoute.get('/', async (c) => {
   const userId = c.get('userId')
 
   const user = await db.query.users.findFirst({
