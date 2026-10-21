@@ -7,11 +7,7 @@ import {
 } from '@/modules/workspace/workspace.service.js'
 import { sValidator } from '@hono/standard-validator'
 import { Hono } from 'hono'
-import {
-  createWorkspaceSchema,
-  patchWorkspaceSchema,
-  workspaceParamsSchema,
-} from './workspace.schema.js'
+import { createWorkspaceSchema, patchWorkspaceSchema } from './workspace.schema.js'
 
 export const workspaceRoute = new Hono<AuthEnv>()
 workspaceRoute.use(authMiddleware)
@@ -29,26 +25,21 @@ workspaceRoute.post('/', sValidator('json', createWorkspaceSchema), async (c) =>
   return c.json({ success: true, data: result })
 })
 
-workspaceRoute.patch(
-  '/:workspaceId',
-  sValidator('param', workspaceParamsSchema),
-  sValidator('json', patchWorkspaceSchema),
-  async (c) => {
-    const { name, description } = c.req.valid('json')
-    const workspaceId = c.req.param('workspaceId')
+workspaceRoute.patch('/:workspaceId', sValidator('json', patchWorkspaceSchema), async (c) => {
+  const { name, description } = c.req.valid('json')
+  const workspaceId = c.req.param('workspaceId')
 
-    const result = await editUserWorkspace({
-      workspaceId,
-      ownerUserId: c.get('userId'),
-      name,
-      description,
-    })
+  const result = await editUserWorkspace({
+    workspaceId,
+    ownerUserId: c.get('userId'),
+    name,
+    description,
+  })
 
-    return c.json({ success: true, data: result })
-  }
-)
+  return c.json({ success: true, data: result })
+})
 
-workspaceRoute.delete('/:workspaceId', sValidator('param', workspaceParamsSchema), async (c) => {
+workspaceRoute.delete('/:workspaceId', async (c) => {
   const workspaceId = c.req.param('workspaceId')
   await deleteUserWorkspace({ workspaceId, ownerUserId: c.get('userId') })
 
