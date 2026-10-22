@@ -1,0 +1,30 @@
+info:
+  name: login
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{HostName}}/api/auth/login"
+  body:
+    type: json
+    data: |-
+      {
+        "identifier": "slypery",
+        "password": "23472347"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.status === 200) {
+          bru.setEnvVar('AccessToken', res.body.data.accessToken)
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

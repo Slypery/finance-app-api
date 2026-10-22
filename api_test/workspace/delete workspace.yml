@@ -1,0 +1,22 @@
+info:
+  name: delete workspace
+  type: http
+  seq: 4
+
+http:
+  method: DELETE
+  url: "{{HostName}}/api/workspaces/{{WorkspaceId}}"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "test1",
+        "description": "test1testtest"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

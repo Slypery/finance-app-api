@@ -1,0 +1,24 @@
+info:
+  name: register
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{HostName}}/api/auth/register"
+  body:
+    type: json
+    data: |-
+      {
+        "username": "slypery",
+        "email": "ibnuumar634@gmail.com",
+        "displayName": "Allay",
+        "password": "23472347"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

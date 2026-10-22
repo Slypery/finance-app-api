@@ -1,0 +1,6 @@
+name: hono
+variables:
+  - name: HostName
+    value: localhost:3000
+  - secret: true
+    name: AccessToken
